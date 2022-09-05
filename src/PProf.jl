@@ -272,10 +272,13 @@ function pprof(data::Union{Nothing, Vector{UInt}} = nothing,
         default_sample_type = 1, # events
     )
 
-    # Write to disk
-    open(out, "w") do io
+    # Write to disk. When running an external ‘pprof’ process with
+    # ‘nodemon’, this tmp+mv helps ensure that pprof never sees a
+    # partially written file
+    open(out * ".tmp", "w") do io
         ProtoBuf.encode(ProtoBuf.ProtoEncoder(io), prof)
     end
+    Base.Filesystem.mv(out * ".tmp", out, force=true)
 
     if web
         refresh(webhost = webhost, webport = webport, file = out,
